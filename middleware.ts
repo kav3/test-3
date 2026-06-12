@@ -1,3 +1,5 @@
+import type { IncomingMessage, ServerResponse } from "http"
+
 const locales = ["fa", "en"]
 
 function setUrl(req: any, value: string): void {
@@ -16,8 +18,8 @@ function setUrl(req: any, value: string): void {
 }
 
 export default async function middleware(
-    req: any,
-    _res: any,
+    req: IncomingMessage,
+    _res: ServerResponse,
 ) {
     console.log("middleware start")
     if (!req.url) return
