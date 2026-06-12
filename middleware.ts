@@ -25,9 +25,9 @@ export default async function middleware(
     const pathname = url.pathname
 
     if (pathname === "/fa" || pathname === "/fa/") {
-        _res.writeHead(302, {
-            Location: "/",
-        });
+        // Redirect to root path without using headWrite which fails in this environment.
+        _res.statusCode = 302;
+        _res.setHeader('Location', '/');
         _res.end();
         return;
     }
