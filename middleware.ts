@@ -24,17 +24,26 @@ export default async function middleware(
     const url = new URL(req.url, "http://localhost")
     const pathname = url.pathname
 
-    if (pathname === "/fa" || pathname === "/fa/") {
-        // Redirect to root path without using headWrite which fails in this environment.
-        _res.statusCode = 302;
-        _res.setHeader('Location', '/');
-        _res.end();
-        return;
-    }
-
     // Ignore internal routes starting with __
     if (pathname.startsWith("/__")) {
         return
+    }
+
+    // Redirect all requests starting with /fa/ or exactly /fa to the root path /.
+    if (pathname.startsWith("/fa/") || pathname === "/fa") {
+        try {
+            _res.statusCode = 302
+            _res.setHeader("Location", "/")
+            _res.end()
+            return
+        } catch (error) {
+            return new Response(null, {
+                status: 302,
+                headers: {
+                    Location: "/",
+                }
+            })
+        }
     }
 
     const parts = pathname.split("/").filter(Boolean)
