@@ -1,8 +1,6 @@
-import type { IncomingMessage, ServerResponse } from 'http'
-
 export default async function middleware(
-    req: IncomingMessage,
-    res: ServerResponse,
+    req: any,
+    res: any,
 ): Promise<void> {
     // Inject a response header on every request
     res.setHeader('X-Powered-By', 'nukejs')
