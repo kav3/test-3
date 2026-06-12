@@ -1,11 +1,10 @@
 const locales = ["fa", "en"]
+const defaultLocale = "fa"
 
 function setUrl(req: any, value: string): void {
     try {
-        // Fast path — works on plain Node http.IncomingMessage (local/Node build).
         (req as any).url = value
     } catch {
-        // Fallback — req.url is a getter-only accessor (Vercel).
         Object.defineProperty(req, "url", {
             value,
             writable: true,
@@ -15,34 +14,44 @@ function setUrl(req: any, value: string): void {
     }
 }
 
-export default async function middleware(
-    req: any,
-    _res: any,
-) {
-    console.log("middleware start")
+export default async function middleware(req: any, res: any) {
     if (!req.url) return
 
     const url = new URL(req.url, "http://localhost")
     const pathname = url.pathname
 
-    // Ignore internal routes starting with __
-    if (pathname.startsWith("/__")) {
+    // Ignore internal routes, static assets, or next/vite builds
+    if (pathname.startsWith("/__") || pathname.includes(".") || pathname.startsWith("/_next")) {
         return
     }
 
     const parts = pathname.split("/").filter(Boolean)
+    const firstPart = parts[0]
 
-    // Already has locale
-    if (locales.includes(parts[0])) {
+    // 1. EXTERNAL REDIRECT: If browser URL has /fa, force it to drop it
+    if (firstPart === defaultLocale) {
+        const cleanPathname = pathname.replace(`/${defaultLocale}`, "") || "/"
+        const targetUrl = `${cleanPathname}${url.search}`
+
+        // If your framework has res.redirect (Express/Vercel Node)
+        if (typeof res.redirect === "function") {
+            return res.redirect(302, targetUrl)
+        } 
+        
+        // Fallback for raw Node http.ServerResponse
+        res.statusCode = 302
+        res.setHeader("Location", targetUrl)
+        res.end()
         return
     }
 
-    // /login -> /en/login
-    // /dashboard -> /en/dashboard
+    // 2. LEAVE OTHER LOCALES ALONE: If it's /en, let it pass through
+    if (locales.includes(firstPart)) {
+        return
+    }
 
-    setUrl(req, `/${"fa"}${pathname === "/" ? "" : pathname}${url.search}`)
-
-    // req.url = `/${"fa"}${pathname === "/" ? "" : pathname}${url.search}`
-
-    console.log("middleware end")
+    // 3. INTERNAL REWRITE: For clean URLs (like /dashboard), 
+    // tell your app code under-the-hood that it's actually the default locale
+    const rewrittenPath = `/${defaultLocale}${pathname === "/" ? "" : pathname}`
+    setUrl(req, `${rewrittenPath}${url.search}`)
 }
