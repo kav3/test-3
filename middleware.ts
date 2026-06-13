@@ -55,5 +55,4 @@ export default async function middleware(req: any, _res: any) {
 
     setUrl(req, newPath)
 
-    console.log("middleware end")
 }

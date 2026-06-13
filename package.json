@@ -12,7 +12,7 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
-    "nukejs": "file:nukejs-0.0.22.tgz",
+    "nukejs": "^0.0.22",
     "tsx": "^4.21.0"
   },
   "devDependencies": {
